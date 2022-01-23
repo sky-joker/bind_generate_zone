@@ -1,0 +1,25 @@
+---
+argument_specs:
+  main:
+    short_description: "The variables are used in running the role"
+    options:
+      gather_activate_ips:
+        type: str
+        required: true
+        description: "The gather_activate_ips is a list of gathered activate ips with netbox_gather_activate_ip_addr role"
+      bind_config_dir:
+        type: str
+        required: true
+        description: "The bind_config_dir is the directory path of managing the zone file"
+      domain:
+        type: str
+        required: true
+        description: "The domain is to be set to the zone file"
+      target_prefix:
+        type: str
+        required: true
+        description: "The target_prefix is a subnet address to generate in the reverse zone file"
+      exclude_domain:
+        type: str
+        required: fasle
+        description: "If you'd like not to include some domain, set the exclude_domain"

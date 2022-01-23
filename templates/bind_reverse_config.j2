@@ -1,0 +1,16 @@
+#jinja2: lstrip_blocks: "True (or False)", trim_blocks: "True (or False)"
+$TTL    86400
+@   IN    SOA    {{ dns_server_name }}.    root.{{ dns_server_name }}(
+                               {{ ansible_date_time.epoch }} ; Serial
+                               28800      ; Refresh
+                               14400      ; Retry
+                               3600000    ; Expire
+                               86400 )    ; Minimum
+     IN    NS     {{ dns_server_name }}.
+{% for record in records %}
+{%    if record.dns_name | regex_search('^(?!\.).*$') and record.description | regex_search('^(?!.*no_reverse).*$') %}
+{%        if record.subnet == target_prefix %}
+{{ record.address.split('.') | last }}    IN    PTR    {{ record.dns_name }}.{{ domain }}.
+{%        endif %}
+{%    endif %}
+{% endfor %}
