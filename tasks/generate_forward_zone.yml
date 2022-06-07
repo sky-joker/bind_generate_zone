@@ -2,38 +2,28 @@
 - name: Set records variable to generate zone file
   ansible.builtin.set_fact:
     records: >-
-      {{ records | default([])
-        + [{
-            'address': item.value.address | ipaddr('address'),
-            'dns_name': item.value.dns_name | regex_replace('\.' + domain + '$', ''),
-            'description': item.value.description,
-            'subnet': item.value.address | ipaddr('subnet')
-          }]
+      {{ records | default({})
+        | combine({
+              item.value.tenant.name: records[item.value.tenant.name] | default([])
+              + [{
+                 'address': item.value.address | ansible.netcommon.ipaddr('address'),
+                 'dns_name': item.value.dns_name | regex_replace('\.' + domain + '$', ''),
+                 'description': item.value.description,
+                 'subnet': item.value.address | ansible.netcommon.ipaddr('subnet')
+              }]
+          })
       }}
   loop: "{{ gather_activate_ips }}"
   when:
-    - not item.value.dns_name | length == 0
+    - "'tenant' in item.value"
+    - item.value.tenant != none
+    - item.value.dns_name | length >= 1
 
 - name: Generate a forward zone file
   ansible.builtin.template:
     src: templates/bind_forward_config.j2
-    dest: "{{ bind_config_dir }}/{{ domain }}.db"
+    dest: "{{ bind_config_dir }}/{{ item.key }}.db"
     mode: "0644"
-  when:
-    - domain != "{{ exclude_domain | default(omit) }}"
-  notify:
-    - reload bind
-
-- name: "Generate a reverse zone file"
-  ansible.builtin.template:
-    src: templates/bind_reverse_config.j2
-    dest: "{{ bind_config_dir }}/{{ octet3 }}.{{ octet2 }}.{{ octet1 }}.in-addr.arpa.db"
-    mode: "0644"
-  vars:
-    octet1: "{{ target_prefix.split('.')[0] }}"
-    octet2: "{{ target_prefix.split('.')[1] }}"
-    octet3: "{{ target_prefix.split('.')[2] }}"
-  when:
-    - domain != "{{ exclude_domain | default(omit) }}"
+  loop: "{{ records | dict2items }}"
   notify:
     - reload bind

@@ -10,7 +10,7 @@ $TTL    86400
 {% for dns in dns_ip_addrs %}
 dns     IN  A   {{ dns }}
 {% endfor %}
-{% for record in records %}
+{% for record in item.value %}
 {%    if record.dns_name | regex_search('^\.') %}
 {%    else %}
 {{ record.dns_name }}    IN    A    {{ record.address }}
